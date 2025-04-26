@@ -100,3 +100,5 @@ class SQLRanges:
             pandas.DataFrame: A DataFrame containing the subtracted exons.
         """
         return self.query_backend.get_subtracted_exons(self.table_name, self.db_name, self.chrom_strand_tup, other_cdf)
+    
+__all__ = ["SQLRanges"]
