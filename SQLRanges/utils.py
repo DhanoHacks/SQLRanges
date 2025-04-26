@@ -1,15 +1,23 @@
+import sqlite3
 import duckdb
 import time
 import ray
 import pandas as pd
 import pyranges as pr
 
-def get_chrom_strand_tup(sql_table_name, db_name):
-    conn = duckdb.connect(db_name, read_only=True)
-    chrom_strand_tup = conn.execute(f"SELECT DISTINCT Chromosome, Strand FROM {sql_table_name}").fetchdf()
-    conn.close()
-    chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
-    return chrom_strand_tup
+def get_chrom_strand_tup(sql_table_name, db_name, backend="duckdb"):
+    if backend == "duckdb":
+        conn = duckdb.connect(db_name, read_only=True)
+        chrom_strand_tup = conn.execute(f"SELECT DISTINCT Chromosome, Strand FROM {sql_table_name}").fetchdf()
+        conn.close()
+        chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
+        return chrom_strand_tup
+    else:
+        conn = sqlite3.connect(db_name)
+        chrom_strand_tup = pd.read_sql_query(f"SELECT DISTINCT Chromosome, Strand FROM {sql_table_name}", conn)
+        conn.close()
+        chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
+        return chrom_strand_tup
     
 def process_line(line, format):
     """
@@ -70,17 +78,23 @@ def process_batch(lines_batch, format):
             line_dicts.append(line_dict)
     return pd.DataFrame(line_dicts)
 
-def to_db(duckdb_db_name, duckdb_table_name, input_file, chunk_size=4000000, format="gtf"):
+def to_db(sql_db_name, sql_table_name, input_file, chunk_size=4000000, format="gtf", backend="duckdb"):
     """
-    Main function to process a GTF file and write its data into an CSV file.
-    
-    Parameters:
-        csv_name    : Name (path) of the CSV file to write to.
-        input_file : GTF file to process.
-        batch_size : Number of bytes/characters to read from the file at once. Default is 1000000.
-        chunk_size : Number of lines to process in each batch. Default is 8000.
+    Convert a GTF or GFF3 file to a SQLite3 or DuckDB database.
+
+    Args:
+        sql_db_name (str): The name of the SQLite3 or DuckDB database file.
+        sql_table_name (str): The name of the table to create in the database.
+        input_file (str): The path to the GTF or GFF3 file to process.
+        chunk_size (int, optional): The size (in bytes) of each chunk to read from the file. Defaults to 4000000.
+        format (str, optional): The format of the input file, either "gtf" or "gff3". Defaults to "gtf".
+        backend (str, optional): The database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
     """
     assert format in ["gtf", "gff3"], "Format must be either 'gtf' or 'gff3'."
+    assert backend in ["sqlite3", "duckdb"], "Backend must be either 'sqlite3' or 'duckdb'."
+    # if ray is not initialized, initialize it
+    if not ray.is_initialized():
+        ray.init()
 
     with open(input_file, "r") as f:
         # Process the lines in batches using Ray
@@ -106,11 +120,21 @@ def to_db(duckdb_db_name, duckdb_table_name, input_file, chunk_size=4000000, for
     elapsed = time.time() - start_time
     print(f"Created DataFrame with {len(df)} rows in {elapsed*1000:.0f}ms")
     
-    duckdb_conn = duckdb.connect(duckdb_db_name)
-    duckdb_conn.execute(f"DROP TABLE IF EXISTS {duckdb_table_name}")
-    duckdb_conn.execute(f"CREATE TABLE {duckdb_table_name} AS SELECT * FROM df")
-    duckdb_conn.commit()
-    duckdb_conn.close()
+    if backend == "duckdb":
+        conn = duckdb.connect(sql_db_name)
+        conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
+        conn.execute(f"CREATE TABLE {sql_table_name} AS SELECT * FROM df")
+        conn.commit()
+        conn.close()
+    else:
+        conn = sqlite3.connect(sql_db_name)
+        conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
+        df.to_sql(sql_table_name, conn, if_exists="replace", index=False)
+        conn.commit()
+        conn.close()
 
-def to_pyranges(conn, table_name):
-    return pr.PyRanges(conn.execute(f"SELECT * FROM {table_name}").fetchdf())
+def to_pyranges(conn, table_name, backend="duckdb"):
+    if backend == "duckdb":
+        return pr.PyRanges(conn.execute(f"SELECT * FROM {table_name}").fetchdf())
+    else:
+        return pr.PyRanges(pd.read_sql_query(f"SELECT * FROM {table_name}", conn))
