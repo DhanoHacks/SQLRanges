@@ -11,7 +11,7 @@ class SQLRanges:
     
     It supports both SQLite and DuckDB backends. The input file must be in GTF or GFF3 format.
     """
-    def __init__(self, input_file, table_name, db_name, backend='sqlite3', file_format="gtf"):
+    def __init__(self, input_file: str, table_name: str, db_name: str, backend: str = "sqlite3", file_format: str = "gtf"):
         """
         Initialize the SQLRanges class.
 
@@ -70,7 +70,7 @@ class SQLRanges:
         """
         return queries.merge_exon_intervals(self.table_name, self.db_name, self.chrom_strand_tup, backend=self.backend)
     
-    def get_overlapping_genes(self, other_genes):
+    def get_overlapping_genes(self, other_genes: pd.DataFrame) -> pd.DataFrame:
         """Get overlapping genes with the provided gene intervals.
 
         Args:
@@ -82,7 +82,7 @@ class SQLRanges:
         """
         return queries.get_overlapping_genes(self.table_name, self.db_name, self.chrom_strand_tup, other_genes, backend=self.backend)
     
-    def get_subtracted_exons(self, other_cdf):
+    def get_subtracted_exons(self, other_cdf: pr.PyRanges) -> pd.DataFrame:
         """Remove a set of repetitive intervals from the exon features.
 
         Args:

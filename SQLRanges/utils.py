@@ -5,7 +5,17 @@ import ray
 import pandas as pd
 import pyranges as pr
 
-def get_chrom_strand_tup(sql_table_name, db_name, backend="duckdb"):
+def get_chrom_strand_tup(sql_table_name: str, db_name: str, backend: str = "duckdb") -> list:
+    """Get a list of unique Chromosome and Strand tuples from the database.
+
+    Args:
+        sql_table_name (str): Name of the SQL table to query.
+        db_name (str): Name of the database file.
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+
+    Returns:
+        list: A list of tuples containing unique Chromosome and Strand values.
+    """
     if backend == "duckdb":
         conn = duckdb.connect(db_name, read_only=True)
         chrom_strand_tup = conn.execute(f"SELECT DISTINCT Chromosome, Strand FROM {sql_table_name}").fetchdf()
@@ -19,15 +29,20 @@ def get_chrom_strand_tup(sql_table_name, db_name, backend="duckdb"):
         chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
         return chrom_strand_tup
     
-def process_line(line, format):
+def process_line(line: str, format: str = "gtf") -> dict:
     """
-    Process a single GTF file line and return an SQL INSERT statement.
-    
-    The function splits the line on tab characters,
-    processes the first 8 fields and subtracts 1 from the Start field.
-    Then it parses the attribute field (the ninth column) by splitting on ';'
-    and further splitting each attribute on the first space.
-    It finally builds an INSERT statement inserting the collected key/value pairs.
+    Process a single line of GTF or GFF3 file and return a dictionary of attributes.
+
+    Args:
+        line (str): A line from the GTF or GFF3 file.
+        format (str, optional): The format of the file, either "gtf" or "gff3". Defaults to "gtf".
+
+    Raises:
+        ValueError: If the line has less than 9 tab-separated fields.
+        ValueError: If there is an error processing the 'Start' or 'End' value.
+
+    Returns:
+        dict: A dictionary containing the attributes of the line.
     """
     # dont process comment lines i.e lines starting with '#'
     if line.startswith('#'):
@@ -49,7 +64,7 @@ def process_line(line, format):
         data["Start"] = int(data["Start"]) - 1
         data["End"] = int(data["End"])
     except Exception as e:
-        raise ValueError(f"Error processing 'Start' value: {data['Start']}") from e
+        raise ValueError(f"Error processing 'Start' or 'End' value: {data['Start']}, {data['End']}") from e
     
     # Process the attribute field (9th field)
     attributes = fields[8]
@@ -67,28 +82,38 @@ def process_line(line, format):
     return data
 
 @ray.remote
-def process_batch(lines_batch, format):
+def process_batch(lines_batch: list, format: str = "gtf") -> pd.DataFrame:
+    """
+    Process a batch of lines from a GTF or GFF3 file and return a DataFrame.
+    This function is designed to be run in parallel using Ray.
+
+    Args:
+        lines_batch (list): A batch of lines from the GTF or GFF3 file.
+        format (str): The format of the file, either "gtf" or "gff3". Defaults to "gtf".
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the processed lines.
+    """
     # Process each line in the batch
     line_dicts = []
     for line in lines_batch:
-        # You can call your original process_line function here.
-        # Or, directly implement the processing logic.
         line_dict = process_line(line, format)
         if line_dict:
             line_dicts.append(line_dict)
     return pd.DataFrame(line_dicts)
 
-def to_db(sql_db_name, sql_table_name, input_file, chunk_size=4000000, format="gtf", backend="duckdb"):
+# def to_db(sql_db_name, sql_table_name, input_file, chunk_size=4000000, format="gtf", backend="duckdb"):
+def to_db(sql_db_name: str, sql_table_name: str, input_file: str, chunk_size: int = 4000000, format: str = "gtf", backend: str = "duckdb"):
     """
-    Convert a GTF or GFF3 file to a SQLite3 or DuckDB database.
+    Convert a GTF or GFF3 file to a SQL database table.
 
     Args:
-        sql_db_name (str): The name of the SQLite3 or DuckDB database file.
-        sql_table_name (str): The name of the table to create in the database.
-        input_file (str): The path to the GTF or GFF3 file to process.
-        chunk_size (int, optional): The size (in bytes) of each chunk to read from the file. Defaults to 4000000.
-        format (str, optional): The format of the input file, either "gtf" or "gff3". Defaults to "gtf".
-        backend (str, optional): The database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+        sql_db_name (str): Name of the SQL database file (e.g., 'database.db').
+        sql_table_name (str): Name of the SQL table to create.
+        input_file (str): Path to the input GTF or GFF3 file.
+        chunk_size (int, optional): Size of the chunks (in bytes) to read from the file. Defaults to 4000000 bytes.
+        format (str, optional): Format of the input file, either "gtf" or "gff3". Defaults to "gtf".
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
     """
     assert format in ["gtf", "gff3"], "Format must be either 'gtf' or 'gff3'."
     assert backend in ["sqlite3", "duckdb"], "Backend must be either 'sqlite3' or 'duckdb'."
@@ -133,7 +158,18 @@ def to_db(sql_db_name, sql_table_name, input_file, chunk_size=4000000, format="g
         conn.commit()
         conn.close()
 
-def to_pyranges(conn, table_name, backend="duckdb"):
+def to_pyranges(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str, backend: str = "duckdb") -> pr.PyRanges:
+    """
+    Convert a SQL table to a PyRanges object.
+
+    Args:
+        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        table_name (str): Name of the SQL table to query.
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+
+    Returns:
+        pr.PyRanges: A PyRanges object containing the genomic data from the SQL table.
+    """
     if backend == "duckdb":
         return pr.PyRanges(conn.execute(f"SELECT * FROM {table_name}").fetchdf())
     else:
