@@ -27,6 +27,8 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
+autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+
 
 
 # -- Options for HTML output -------------------------------------------------
