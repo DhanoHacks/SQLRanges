@@ -1,0 +1,23 @@
+# .readthedocs.yml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2  # Correct version number, "2" is needed for current ReadTheDocs configs
+
+# Set the OS, Python version, and other tools
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+
+# Python dependencies
+python:
+  install:
+    - method: pip
+      path: .  # Install your package itself (important for autodoc to work)
+    - requirements: docs/requirements.txt  # Your doc-specific requirements, if you have one
+
+# Build documentation in the "docs/" directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
