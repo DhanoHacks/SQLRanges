@@ -26,6 +26,14 @@ jobs:
       - name: Test imports
         run: |
           python -c "import SQLRanges; import SQLRanges.queries; import SQLRanges.utils"
+      
+      - name: Clean previous build
+        run: |
+          rm -rf docs/build/*
+      
+      - name: List the contents of SQLRanges
+        run: |
+          ls -R SQLRanges
           
       - name: Build documentation
         run: |

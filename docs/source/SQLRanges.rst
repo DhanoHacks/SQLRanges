@@ -27,3 +27,6 @@ Module contents
    :members:
    :show-inheritance:
    :undoc-members:
+
+.. automodule:: SQLRanges.simple
+   :members:
