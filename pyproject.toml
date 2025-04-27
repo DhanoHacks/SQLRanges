@@ -26,3 +26,6 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/DhanoHacks/SQLRanges"
+
+[tool.setuptools.packages.find]
+where = ["."]
