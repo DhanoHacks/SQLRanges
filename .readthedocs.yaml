@@ -1,0 +1,30 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+version: 2
+
+# Set the OS, Python version, and other tools you might need
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.13"
+
+# Install dependencies for building docs
+python:
+  install:
+    - requirements: requirements.txt  # You can use a requirements file for your dependencies
+    - path: .  # Install the package from the current directory (to make SQLRanges available to Sphinx)
+
+# Specify the Sphinx configuration file
+sphinx:
+  configuration: source/conf.py  # Point to the conf.py file in the source directory
+
+# Optional: caching for faster builds
+extra:
+  build:
+    cache:
+      enabled: true
+
+# Optional: include other files in the docs build (e.g., requirements.txt)
+include:
+  - requirements.txt  # Make sure your requirements.txt file is included for Read the Docs to install dependencies
