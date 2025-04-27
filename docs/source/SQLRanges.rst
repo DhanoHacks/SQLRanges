@@ -9,21 +9,21 @@ SQLRanges.queries module
 
 .. automodule:: SQLRanges.queries
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 SQLRanges.utils module
 ----------------------
 
 .. automodule:: SQLRanges.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: SQLRanges
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

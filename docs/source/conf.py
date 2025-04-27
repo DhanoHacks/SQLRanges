@@ -38,3 +38,8 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 html_baseurl = "https://dhanohacks.github.io/SQLRanges/"
+
+# Make sure autodoc is finding your modules
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../'))  # Adjust path as needed

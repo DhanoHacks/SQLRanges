@@ -34,3 +34,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/build/html
           destination_dir: SQLRanges  # This makes it deploy to dhanohacks.github.io/SQLRanges
+          enable_jekyll: false  # This creates the .nojekyll file
