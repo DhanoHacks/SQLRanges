@@ -19,12 +19,6 @@ python:
 sphinx:
   configuration: source/conf.py  # Point to the conf.py file in the source directory
 
-# Optional: caching for faster builds
-extra:
-  build:
-    cache:
-      enabled: true
-
 # Optional: include other files in the docs build (e.g., requirements.txt)
 include:
   - requirements.txt  # Make sure your requirements.txt file is included for Read the Docs to install dependencies
