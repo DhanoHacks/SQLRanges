@@ -11,6 +11,7 @@ SQLRanges.queries module
    :members:
    :show-inheritance:
    :undoc-members:
+   :autodoc-source-links:
 
 SQLRanges.utils module
 ----------------------
@@ -19,6 +20,7 @@ SQLRanges.utils module
    :members:
    :show-inheritance:
    :undoc-members:
+   :autodoc-source-links:
 
 Module contents
 ---------------
@@ -27,3 +29,4 @@ Module contents
    :members:
    :show-inheritance:
    :undoc-members:
+   :autodoc-source-links:
