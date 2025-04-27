@@ -22,6 +22,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
           pip install sphinx sphinx-rtd-theme
+
+      - name: Test imports
+        run: |
+          python -c "import SQLRanges; import SQLRanges.queries; import SQLRanges.utils"
           
       - name: Build documentation
         run: |
