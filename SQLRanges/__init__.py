@@ -58,7 +58,7 @@ class SQLRanges:
         return queries.query_db(self.conn, sql, backend=self.backend)
         
     def count_intervals(self, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count") -> pd.DataFrame:
-        """Count the number of intervals in the database, grouped by a specified column.
+        """Count the number of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
 
         Args:
             group_by (str, optional): Column to group by. Defaults to "gene_id".
@@ -70,21 +70,18 @@ class SQLRanges:
         """
         return queries.count_intervals(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
-    def exon_length(self) -> pd.DataFrame:
-        """Calculate the total length of exons for each gene in the database.
+    def total_length(self, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "total_length") -> pd.DataFrame:
+        """Calculate the total length of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
+
+        Args:
+            group_by (str, optional): Column to group by. Defaults to "gene_id".
+            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+            return_col_name (str, optional): Column name for the total length result. Defaults to "total_length".
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the gene IDs and their corresponding total exon lengths.
+            pd.DataFrame: A DataFrame containing the grouped total lengths.
         """
-        return queries.exon_length(self.table_name, self.conn, backend=self.backend)
-    
-    def highest_transcripts(self) -> pd.DataFrame:
-        """Identify the chromosome with the highest number of transcripts in the database.
-
-        Returns:
-            pandas.DataFrame: A DataFrame containing the chromosome name and its corresponding transcript count.
-        """
-        return queries.highest_transcripts(self.table_name, self.conn, backend=self.backend)
+        return queries.exon_length(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
     def merge_exon_intervals(self) -> pd.DataFrame:
         """Merge overlapping exon intervals.

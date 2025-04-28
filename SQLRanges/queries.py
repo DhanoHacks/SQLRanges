@@ -37,7 +37,7 @@ def query_db(query: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, b
     
 
 def count_intervals(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count", backend: str = "duckdb") -> pd.DataFrame:
-    """Count the number of intervals in the database, grouped by a specified column.
+    """Count the number of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
 
     Args:
         sql_table_name (str): Name of the SQL table.
@@ -51,42 +51,35 @@ def count_intervals(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckD
         pd.DataFrame: A DataFrame containing the grouped counts.
     """
     if feature_filter is None:
-        return query_db(f"SELECT {group_by}, COUNT(*) as {return_col_name} FROM {sql_table_name} WHERE Feature = \'{feature_filter}\' GROUP BY {group_by}", conn, backend)
+        where_clause = ""
     else:
-        return query_db(f"SELECT {group_by}, COUNT(*) as {return_col_name} FROM {sql_table_name} GROUP BY {group_by}", conn, backend)
-
-def exon_length(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, backend: str = "duckdb") -> pd.DataFrame:
-    """Calculate the total length of exons for each gene in the database.
-
-    Args:
-        sql_table_name (str): Name of the SQL table.
-        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
-        backend (str, optional): Database backend to use. Defaults to "duckdb".
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the gene IDs and their corresponding total exon lengths.
-    """
-    if backend == "duckdb":
-        query = f"SELECT gene_id, SUM(\"End\" - Start) as total_exon_length FROM {sql_table_name} WHERE Feature = \'exon\' GROUP BY gene_id"
-    else:
-        query = f"SELECT gene_id, SUM(End - Start) as total_exon_length FROM {sql_table_name} WHERE Feature = \'exon\' GROUP BY gene_id"
+        where_clause = f" WHERE Feature = \'{feature_filter}\'"
+    query = f"SELECT {group_by}, COUNT(*) as {return_col_name} FROM {sql_table_name}{where_clause} GROUP BY {group_by}"
     return query_db(query, conn, backend)
 
-def highest_transcripts(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, backend: str = "duckdb") -> pd.DataFrame:
-    """Identify the chromosome with the highest number of transcripts in the database.
+def total_length(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "total_length", backend: str = "duckdb") -> pd.DataFrame:
+    """Calculate the total length of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
 
     Args:
         sql_table_name (str): Name of the SQL table.
         conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        group_by (str, optional): Column to group by. Defaults to "gene_id".
+        feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+        return_col_name (str, optional): Column name for the total length result. Defaults to "total_length".
         backend (str, optional): Database backend to use. Defaults to "duckdb".
 
     Returns:
-        pd.DataFrame: A DataFrame containing the chromosome name and its corresponding transcript count.
+        pd.DataFrame: A DataFrame containing the total length of intervals grouped by the specified column.
     """
-    if sql_table_name == "arabidopsis":
-        return query_db(f"SELECT Chromosome, COUNT(*) as transcript_count FROM {sql_table_name} WHERE Feature IN (\'mRNA\', \'snoRNA\', \'lnc_RNA\', \'pseudogenic_transcript\') GROUP BY Chromosome ORDER BY transcript_count DESC LIMIT 1", conn, backend)
+    if feature_filter is None:
+        where_clause = ""
     else:
-        return query_db(f"SELECT Chromosome, COUNT(*) as transcript_count FROM {sql_table_name} WHERE Feature = \'transcript\' GROUP BY Chromosome ORDER BY transcript_count DESC LIMIT 1", conn, backend)
+        where_clause = f" WHERE Feature = \'{feature_filter}\'"
+    if backend == "duckdb":
+        query = f"SELECT {group_by}, SUM(\"End\" - Start) as {return_col_name} FROM {sql_table_name}{where_clause} GROUP BY {group_by}"
+    else:
+        query = f"SELECT {group_by}, SUM(End - Start) as {return_col_name} FROM {sql_table_name}{where_clause} GROUP BY {group_by}"
+    return query_db(query, conn, backend)
 
 @ray.remote
 def  merge_exon_intervals_single(sql_table_name: str, sql_db_name: str, chrom_strand: tuple, backend="duckdb") -> pd.DataFrame:
