@@ -92,7 +92,7 @@ class SQLRanges:
         Returns:
             pd.DataFrame: A DataFrame containing the merged intervals.
         """
-        return queries.merge_exon_intervals(self.table_name, self.db_name, self.chrom_strand_tup, feature_filter=feature_filter, backend=self.backend)
+        return queries.merge_intervals(self.table_name, self.db_name, self.chrom_strand_tup, feature_filter=feature_filter, backend=self.backend)
     
     def overlapping_intervals(self, other_intervals: pd.DataFrame, feature_filter: None | str = None) -> pd.DataFrame:
         """Find overlapping intervals between the database and a set of other intervals. The function can also optionaly filter the intervals based on a specific feature.
