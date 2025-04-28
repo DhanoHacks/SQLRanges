@@ -85,6 +85,9 @@ def merge_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: lis
     """
     futures = [merge_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, feature_filter=feature_filter, backend=backend) for chrom_strand in chrom_strand_tup]
     merged_intervals = ray.get(futures)
+    merged_intervals = [df for df in merged_intervals if df is not None and not df.empty]
+    if not merged_intervals:
+        return pd.DataFrame(columns=["Chromosome", "Start", "End", "Strand"])
     merged_intervals = pd.concat(merged_intervals).sort_values(["Chromosome", "Strand", "Start", "End"]).reset_index(drop=True)
     return merged_intervals
 
