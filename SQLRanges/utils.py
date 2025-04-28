@@ -4,7 +4,41 @@ import time
 import ray
 import pandas as pd
 import pyranges as pr
-from queries import get_connection, query_db
+
+def get_connection(sql_db_name: str, backend: str = "duckdb") -> sqlite3.Connection | duckdb.DuckDBPyConnection:
+    """Get a connection to the database.
+
+    Args:
+        sql_db_name (str): Name of the database file.
+        backend (str, optional): Database backend to use. Defaults to "duckdb".
+
+    Returns:
+        sqlite3.Connection | duckdb.DuckDBPyConnection: Database connection object.
+    """
+    if backend == "duckdb":
+        return duckdb.connect(sql_db_name, read_only=True)
+    else:
+        return sqlite3.connect(sql_db_name)
+
+def query_db(query: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, backend: str = "duckdb", return_df=True) -> pd.DataFrame | None:
+    """Execute a SQL query and return the result as a pandas DataFrame (or nothing).
+
+    Args:
+        query (str): SQL query to execute.
+        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        backend (str, optional): Database backend to use. Defaults to "duckdb".
+        return_df (bool, optional): Whether to return the result (as a DataFrame) or not. Defaults to True.
+
+    Returns:
+        pd.DataFrame | None: Result of the query as a pandas DataFrame, or None if return_df is False.
+    """
+    if return_df:
+        if backend == "duckdb":
+            return conn.execute(query).fetchdf()
+        else:
+            return pd.read_sql_query(query, conn)
+    else:
+        return conn.execute(query)
 
 def get_chrom_strand_tup(sql_table_name: str, db_name: str, backend: str = "duckdb") -> list:
     """Get a list of unique Chromosome and Strand tuples from the database.
