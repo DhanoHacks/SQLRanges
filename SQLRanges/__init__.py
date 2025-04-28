@@ -81,7 +81,7 @@ class SQLRanges:
         Returns:
             pd.DataFrame: A DataFrame containing the grouped total lengths.
         """
-        return queries.exon_length(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
+        return queries.total_length(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
     def merge_intervals(self, feature_filter: None | str = None) -> pd.DataFrame:
         """Merge overlapping intervals in the database. The function can also optionaly filter the intervals based on a specific feature.
