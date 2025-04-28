@@ -107,16 +107,17 @@ class SQLRanges:
         """
         return queries.overlapping_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
     
-    def get_subtracted_exons(self, other_cdf: pr.PyRanges) -> pd.DataFrame:
-        """Remove a set of repetitive intervals from the exon features.
+    def subtract_intervals(self, other_intervals: pd.DataFrame, feature_filter: None | str = None) -> pd.DataFrame:
+        """Subtract a set of other intervals from the database intervals. The function can also optionaly filter the intervals based on a specific feature.
 
         Args:
-            other_cdf (pyranges.PyRanges): A PyRanges object containing the intervals to be subtracted.
-            The PyRanges object should have columns 'Chromosome', 'Start', 'End', and 'Strand'.
+            other_intervals (pd.DataFrame): A DataFrame containing the other intervals to subtract.
+                The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand' (and 'Feature' if feature_filter is set).
+            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the subtracted exons.
+            pd.DataFrame: A DataFrame containing the intervals after subtraction.
         """
-        return queries.get_subtracted_exons(self.table_name, self.db_name, self.chrom_strand_tup, other_cdf, backend=self.backend)
+        return queries.subtract_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
     
 __all__ = ["SQLRanges"]
