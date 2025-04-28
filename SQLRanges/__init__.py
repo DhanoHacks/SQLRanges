@@ -29,6 +29,14 @@ class SQLRanges:
         utils.to_db(self.db_name, self.table_name, input, format=file_format, backend=self.backend)
         self.chrom_strand_tup = utils.get_chrom_strand_tup(self.table_name, self.db_name, backend=self.backend)
         self.conn = queries.get_connection(self.db_name, backend=self.backend)
+        
+    def to_pandas(self) -> pd.DataFrame:
+        """Convert the SQL table to a pandas DataFrame.
+
+        Returns:
+            pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
+        """
+        return utils.to_pandas(self.conn, self.table_name, backend=self.backend)
     
     def to_pyranges(self) -> pr.PyRanges:
         """Convert the SQL table to a PyRanges object.
@@ -37,14 +45,6 @@ class SQLRanges:
             pyranges.PyRanges: A PyRanges object containing the genomic data from the SQL table.
         """
         return utils.to_pyranges(self.conn, self.table_name, backend=self.backend)
-    
-    def to_pandas(self) -> pd.DataFrame:
-        """Convert the SQL table to a pandas DataFrame.
-
-        Returns:
-            pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
-        """
-        return utils.to_pandas(self.conn, self.table_name, backend=self.backend)
 
     def query_sql(self, sql: str) -> pd.DataFrame:
         """Execute a SQL query on the database.
@@ -94,17 +94,18 @@ class SQLRanges:
         """
         return queries.merge_exon_intervals(self.table_name, self.db_name, self.chrom_strand_tup, feature_filter=feature_filter, backend=self.backend)
     
-    def get_overlapping_genes(self, other_genes: pd.DataFrame) -> pd.DataFrame:
-        """Get overlapping genes with the provided gene intervals.
+    def overlapping_intervals(self, other_intervals: pd.DataFrame, feature_filter: None | str = None) -> pd.DataFrame:
+        """Find overlapping intervals between the database and a set of other intervals. The function can also optionaly filter the intervals based on a specific feature.
 
         Args:
-            other_genes (pandas.DataFrame): A DataFrame containing the gene intervals to check for overlaps with.
-            The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand'.
+            other_intervals (pd.DataFrame): A DataFrame containing the other intervals to check for overlaps.
+                The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand'.
+            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the overlapping genes.
+            pd.DataFrame: A DataFrame containing the overlapping intervals.
         """
-        return queries.get_overlapping_genes(self.table_name, self.db_name, self.chrom_strand_tup, other_genes, backend=self.backend)
+        return queries.overlapping_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
     
     def get_subtracted_exons(self, other_cdf: pr.PyRanges) -> pd.DataFrame:
         """Remove a set of repetitive intervals from the exon features.
