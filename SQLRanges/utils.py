@@ -103,14 +103,14 @@ def process_batch(lines_batch: list, format: str = "gtf") -> pd.DataFrame:
     return pd.DataFrame(line_dicts)
 
 # def to_db(sql_db_name, sql_table_name, input_file, chunk_size=4000000, format="gtf", backend="duckdb"):
-def to_db(sql_db_name: str, sql_table_name: str, input_file: str, chunk_size: int = 4000000, format: str = "gtf", backend: str = "duckdb"):
+def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chunk_size: int = 4000000, format: str = "gtf", backend: str = "duckdb"):
     """
     Convert a GTF or GFF3 file to a SQL database table.
 
     Args:
         sql_db_name (str): Name of the SQL database file (e.g., 'database.db').
         sql_table_name (str): Name of the SQL table to create.
-        input_file (str): Path to the input GTF or GFF3 file.
+        input (str | pandas.DataFrame): Path to the input file (GTF or GFF3) or a pandas DataFrame containing genomic data.
         chunk_size (int, optional): Size of the chunks (in bytes) to read from the file. Defaults to 4000000 bytes.
         format (str, optional): Format of the input file, either "gtf" or "gff3". Defaults to "gtf".
         backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
@@ -120,8 +120,25 @@ def to_db(sql_db_name: str, sql_table_name: str, input_file: str, chunk_size: in
     # if ray is not initialized, initialize it
     if not ray.is_initialized():
         ray.init()
-
-    with open(input_file, "r") as f:
+    
+    # If input is a DataFrame, convert it to a list of lines
+    if isinstance(input, pd.DataFrame):
+        if backend == "duckdb":
+            conn = duckdb.connect(sql_db_name)
+            conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
+            conn.execute(f"CREATE TABLE {sql_table_name} AS SELECT * FROM input")
+            conn.commit()
+            conn.close()
+        else:
+            conn = sqlite3.connect(sql_db_name)
+            conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
+            input.to_sql(sql_table_name, conn, if_exists="replace", index=False)
+            conn.commit()
+            conn.close()
+        return
+    
+    # If input is a file, read it in chunks
+    with open(input, "r") as f:
         # Process the lines in batches using Ray
         start_time = time.time()
         futures = []

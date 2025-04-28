@@ -11,12 +11,12 @@ class SQLRanges:
     
     It supports both SQLite and DuckDB backends. The input file must be in GTF or GFF3 format.
     """
-    def __init__(self, input_file: str, table_name: str, db_name: str, backend: str = "sqlite3", file_format: str = "gtf"):
+    def __init__(self, input: str | pd.DataFrame, table_name: str, db_name: str, backend: str = "sqlite3", file_format: str = "gtf"):
         """
         Initialize the SQLRanges class.
 
         Args:
-            input_file (str): Path to the input file.
+            input (str | pandas.DataFrame): Path to the input file (GTF or GFF3) or a pandas DataFrame containing genomic data.
             table_name (str): Name of the table to be created in the database.
             db_name (str): Name of the database file (e.g., 'database.db').
             backend (str, optional): Database backend to use. Either 'sqlite3' or 'duckdb'. Defaults to 'sqlite3'.
@@ -26,7 +26,7 @@ class SQLRanges:
         self.db_name = db_name
         self.table_name = table_name
         self.backend = backend
-        utils.to_db(self.db_name, self.table_name, input_file, format=file_format, backend=self.backend)
+        utils.to_db(self.db_name, self.table_name, input, format=file_format, backend=self.backend)
         self.chrom_strand_tup = utils.get_chrom_strand_tup(self.table_name, self.db_name, backend=self.backend)
         self.conn = queries.get_connection(self.db_name, backend=self.backend)
     
