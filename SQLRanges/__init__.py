@@ -83,13 +83,16 @@ class SQLRanges:
         """
         return queries.exon_length(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
-    def merge_exon_intervals(self) -> pd.DataFrame:
-        """Merge overlapping exon intervals.
+    def merge_intervals(self, feature_filter: None | str = None) -> pd.DataFrame:
+        """Merge overlapping intervals in the database. The function can also optionaly filter the intervals based on a specific feature.
+
+        Args:
+            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the merged exon intervals.
+            pd.DataFrame: A DataFrame containing the merged intervals.
         """
-        return queries.merge_exon_intervals(self.table_name, self.db_name, self.chrom_strand_tup, backend=self.backend)
+        return queries.merge_exon_intervals(self.table_name, self.db_name, self.chrom_strand_tup, feature_filter=feature_filter, backend=self.backend)
     
     def get_overlapping_genes(self, other_genes: pd.DataFrame) -> pd.DataFrame:
         """Get overlapping genes with the provided gene intervals.

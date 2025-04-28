@@ -51,10 +51,10 @@ def count_intervals(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckD
         pd.DataFrame: A DataFrame containing the grouped counts.
     """
     if feature_filter is None:
-        where_clause = ""
+        feature_clause = ""
     else:
-        where_clause = f" WHERE Feature = \'{feature_filter}\'"
-    query = f"SELECT {group_by}, COUNT(*) as {return_col_name} FROM {sql_table_name}{where_clause} GROUP BY {group_by}"
+        feature_clause = f" WHERE Feature = '{feature_filter}'"
+    query = f"SELECT \"{group_by}\", COUNT(*) as \"{return_col_name}\" FROM \"{sql_table_name}\"{feature_clause} GROUP BY \"{group_by}\""
     return query_db(query, conn, backend)
 
 def total_length(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "total_length", backend: str = "duckdb") -> pd.DataFrame:
@@ -72,56 +72,56 @@ def total_length(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPy
         pd.DataFrame: A DataFrame containing the total length of intervals grouped by the specified column.
     """
     if feature_filter is None:
-        where_clause = ""
+        feature_clause = ""
     else:
-        where_clause = f" WHERE Feature = \'{feature_filter}\'"
-    if backend == "duckdb":
-        query = f"SELECT {group_by}, SUM(\"End\" - Start) as {return_col_name} FROM {sql_table_name}{where_clause} GROUP BY {group_by}"
-    else:
-        query = f"SELECT {group_by}, SUM(End - Start) as {return_col_name} FROM {sql_table_name}{where_clause} GROUP BY {group_by}"
+        feature_clause = f" WHERE Feature = '{feature_filter}'"
+    query = f"SELECT \"{group_by}\", SUM(\"End\" - \"Start\") as \"{return_col_name}\" FROM \"{sql_table_name}\"{feature_clause} GROUP BY \"{group_by}\""
     return query_db(query, conn, backend)
 
 @ray.remote
-def  merge_exon_intervals_single(sql_table_name: str, sql_db_name: str, chrom_strand: tuple, backend="duckdb") -> pd.DataFrame:
-    """Merge overlapping exon intervals for a specific chromosome and strand.
+def  merge_intervals_single(sql_table_name: str, sql_db_name: str, chrom_strand: tuple, feature_filter: None | str = None, backend="duckdb") -> pd.DataFrame:
+    """Merge intervals for a specific chromosome and strand.
     This function is designed to be run in parallel using Ray.
 
     Args:
         sql_table_name (str): Name of the SQL table.
         sql_db_name (str): Name of the SQL database.
         chrom_strand (tuple): Tuple containing chromosome and strand information.
+        feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
         backend (str, optional): Database backend to use. Defaults to "duckdb".
 
     Returns:
-        pd.DataFrame: A DataFrame containing the merged exon intervals.
+        pd.DataFrame: A DataFrame containing the merged intervals for the specified chromosome and strand.
     """
     chrom, strand = chrom_strand
     conn = get_connection(sql_db_name, backend)
-    if backend == "duckdb":
-        query = f"SELECT \"Start\", \"End\" FROM {sql_table_name} WHERE Feature = 'exon' AND Chromosome = '{chrom}' AND Strand = '{strand}'"
+    if feature_filter is None:
+        feature_clause = ""
     else:
-        query = f"SELECT Start, End FROM {sql_table_name} WHERE Feature = 'exon' AND Chromosome = '{chrom}' AND Strand = '{strand}'"
-    exon_intervals = query_db(query, conn, backend)
+        feature_clause = f" Feature = '{feature_filter}' AND"
+    query = f"SELECT \"Start\", \"End\" FROM \"{sql_table_name}\" WHERE{feature_clause} Chromosome = '{chrom}' AND Strand = '{strand}'"
+    merged_intervals = query_db(query, conn, backend)
     conn.close()
-    exon_intervals = pyranges.methods.merge._merge(exon_intervals, chromosome=chrom, count=None, strand=strand)
-    return exon_intervals
+    merged_intervals = pyranges.methods.merge._merge(merged_intervals, chromosome=chrom, count=None, strand=strand)
+    return merged_intervals
 
-def merge_exon_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: list, backend="duckdb") -> pd.DataFrame:
-    """Merge overlapping exon intervals for multiple chromosomes and strands.
+def merge_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: list, feature_filter: None | str = None, backend="duckdb") -> pd.DataFrame:
+    """Merge intervals for multiple chromosomes and strands.
 
     Args:
         sql_table_name (str): Name of the SQL table.
         sql_db_name (str): Name of the SQL database.
         chrom_strand_tup (list): List of tuples containing chromosome and strand information.
+        feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
         backend (str, optional): Database backend to use. Defaults to "duckdb".
 
     Returns:
-        pd.DataFrame: A DataFrame containing the merged exon intervals for all specified chromosomes and strands.
+        pd.DataFrame: A DataFrame containing the merged intervals for all specified chromosomes and strands.
     """
-    futures = [merge_exon_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, backend=backend) for chrom_strand in chrom_strand_tup]
-    exon_intervals = ray.get(futures)
-    exon_intervals = pd.concat(exon_intervals).sort_values(["Chromosome", "Strand", "Start", "End"]).reset_index(drop=True)
-    return exon_intervals
+    futures = [merge_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, feature_filter=feature_filter, backend=backend) for chrom_strand in chrom_strand_tup]
+    merged_intervals = ray.get(futures)
+    merged_intervals = pd.concat(merged_intervals).sort_values(["Chromosome", "Strand", "Start", "End"]).reset_index(drop=True)
+    return merged_intervals
 
 @ray.remote
 def get_overlapping_genes_single(sql_table_name: str, sql_db_name: str, chrom_strand: tuple, other_genes: pd.DataFrame, backend="duckdb") -> pd.DataFrame:
