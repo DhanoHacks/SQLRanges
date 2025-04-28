@@ -145,9 +145,6 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
     """
     assert format in ["gtf", "gff3"], "Format must be either 'gtf' or 'gff3'."
     assert backend in ["sqlite3", "duckdb"], "Backend must be either 'sqlite3' or 'duckdb'."
-    # if ray is not initialized, initialize it
-    if not ray.is_initialized():
-        ray.init()
     
     # If input is a DataFrame, convert it to a list of lines
     if isinstance(input, pd.DataFrame):
@@ -164,6 +161,10 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
             conn.commit()
             conn.close()
         return
+    
+    # if ray is not initialized, initialize it
+    if not ray.is_initialized():
+        ray.init()
     
     # If input is a file, read it in chunks
     with open(input, "r") as f:
