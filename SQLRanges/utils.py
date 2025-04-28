@@ -4,6 +4,7 @@ import time
 import ray
 import pandas as pd
 import pyranges as pr
+from queries import get_connection, query_db
 
 def get_chrom_strand_tup(sql_table_name: str, db_name: str, backend: str = "duckdb") -> list:
     """Get a list of unique Chromosome and Strand tuples from the database.
@@ -16,18 +17,11 @@ def get_chrom_strand_tup(sql_table_name: str, db_name: str, backend: str = "duck
     Returns:
         list: A list of tuples containing unique Chromosome and Strand values.
     """
-    if backend == "duckdb":
-        conn = duckdb.connect(db_name, read_only=True)
-        chrom_strand_tup = conn.execute(f"SELECT DISTINCT Chromosome, Strand FROM {sql_table_name}").fetchdf()
-        conn.close()
-        chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
-        return chrom_strand_tup
-    else:
-        conn = sqlite3.connect(db_name)
-        chrom_strand_tup = pd.read_sql_query(f"SELECT DISTINCT Chromosome, Strand FROM {sql_table_name}", conn)
-        conn.close()
-        chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
-        return chrom_strand_tup
+    conn = get_connection(db_name, backend=backend)
+    chrom_strand_tup = query_db(f"SELECT DISTINCT Chromosome, Strand FROM \"{sql_table_name}\"", conn, backend=backend)
+    conn.close()
+    chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
+    return chrom_strand_tup
     
 def process_line(line: str, format: str = "gtf") -> dict:
     """
@@ -162,18 +156,27 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
     elapsed = time.time() - start_time
     print(f"Created DataFrame with {len(df)} rows in {elapsed*1000:.0f}ms")
     
+    conn = get_connection(sql_db_name, backend=backend)
+    query_db(f"DROP TABLE IF EXISTS \"{sql_table_name}\"", conn, backend=backend, return_df=False)
     if backend == "duckdb":
-        conn = duckdb.connect(sql_db_name)
-        conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
-        conn.execute(f"CREATE TABLE {sql_table_name} AS SELECT * FROM df")
-        conn.commit()
-        conn.close()
+        conn.execute(f"CREATE TABLE \"{sql_table_name}\" AS SELECT * FROM df")
     else:
-        conn = sqlite3.connect(sql_db_name)
-        conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
         df.to_sql(sql_table_name, conn, if_exists="replace", index=False)
-        conn.commit()
-        conn.close()
+    conn.commit()
+    conn.close()
+
+def to_pandas(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str, backend: str = "duckdb") -> pd.DataFrame:
+    """Convert a SQL table to a pandas DataFrame.
+
+    Args:
+        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        table_name (str): Name of the SQL table to query.
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
+    """
+    return query_db(f"SELECT * FROM \"{table_name}\"", conn, backend=backend)
 
 def to_pyranges(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str, backend: str = "duckdb") -> pr.PyRanges:
     """
@@ -187,23 +190,4 @@ def to_pyranges(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name
     Returns:
         pr.PyRanges: A PyRanges object containing the genomic data from the SQL table.
     """
-    if backend == "duckdb":
-        return pr.PyRanges(conn.execute(f"SELECT * FROM {table_name}").fetchdf())
-    else:
-        return pr.PyRanges(pd.read_sql_query(f"SELECT * FROM {table_name}", conn))
-
-def to_pandas(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str, backend: str = "duckdb") -> pd.DataFrame:
-    """Convert a SQL table to a pandas DataFrame.
-
-    Args:
-        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
-        table_name (str): Name of the SQL table to query.
-        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
-
-    Returns:
-        pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
-    """
-    if backend == "duckdb":
-        return conn.execute(f"SELECT * FROM {table_name}").fetchdf()
-    else:
-        return pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+    return pr.PyRanges(to_pandas(conn, table_name, backend=backend))
