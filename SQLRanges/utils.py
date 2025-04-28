@@ -56,6 +56,30 @@ def get_chrom_strand_tup(sql_table_name: str, db_name: str, backend: str = "duck
     conn.close()
     chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
     return chrom_strand_tup
+
+def get_intervals(sql_table_name: str, db_name: str, chrom: str, strand: str, feature_filter: str = None, backend: str = "duckdb") -> pd.DataFrame:
+    """Get intervals from the database based on Chromosome, Strand, and optional feature filter.
+
+    Args:
+        sql_table_name (str): Name of the SQL table to query.
+        db_name (str): Name of the database file.
+        chrom (str): Chromosome to filter by.
+        strand (str): Strand to filter by.
+        feature_filter (str, optional): Feature to filter by. Defaults to None.
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the filtered intervals.
+    """
+    conn = get_connection(db_name, backend)
+    if feature_filter is None:
+        feature_clause = ""
+    else:
+        feature_clause = f" Feature = '{feature_filter}' AND"
+    query = f"SELECT * FROM \"{sql_table_name}\" WHERE{feature_clause} Chromosome = '{chrom}' AND Strand = '{strand}'"
+    self_intervals = query_db(query, conn, backend)
+    conn.close()
+    return self_intervals
     
 def process_line(line: str, format: str = "gtf") -> dict:
     """
