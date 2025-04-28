@@ -45,14 +45,30 @@ class SQLRanges:
             pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
         """
         return utils.to_pandas(self.conn, self.table_name, backend=self.backend)
-        
-    def count_exons(self) -> pd.DataFrame:
-        """Count the number of exons for each gene in the database.
+
+    def query_sql(self, sql: str) -> pd.DataFrame:
+        """Execute a SQL query on the database.
+
+        Args:
+            sql (str): The SQL query to be executed.
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the gene IDs and their corresponding exon counts.
+            pd.DataFrame: A pandas DataFrame containing the results of the SQL query.
         """
-        return queries.count_exons(self.table_name, self.conn, backend=self.backend)
+        return queries.query_db(self.conn, sql, backend=self.backend)
+        
+    def count_intervals(self, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count") -> pd.DataFrame:
+        """Count the number of intervals in the database, grouped by a specified column.
+
+        Args:
+            group_by (str, optional): Column to group by. Defaults to "gene_id".
+            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+            return_col_name (str, optional): Column name for the count result. Defaults to "count".
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the grouped counts.
+        """
+        return queries.count_intervals(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
     def exon_length(self) -> pd.DataFrame:
         """Calculate the total length of exons for each gene in the database.

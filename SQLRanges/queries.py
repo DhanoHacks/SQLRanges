@@ -36,18 +36,24 @@ def query_db(query: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, b
         return pd.read_sql_query(query, conn)
     
 
-def count_exons(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, backend: str = "duckdb") -> pd.DataFrame:
-    """Count the number of exons for each gene in the database.
+def count_intervals(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count", backend: str = "duckdb") -> pd.DataFrame:
+    """Count the number of intervals in the database, grouped by a specified column.
 
     Args:
         sql_table_name (str): Name of the SQL table.
         conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        group_by (str, optional): Column to group by. Defaults to "gene_id".
+        feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+        return_col_name (str, optional): Column name for the count result. Defaults to "count".
         backend (str, optional): Database backend to use. Defaults to "duckdb".
 
     Returns:
-        pd.DataFrame: A DataFrame containing the gene IDs and their corresponding exon counts.
+        pd.DataFrame: A DataFrame containing the grouped counts.
     """
-    return query_db(f"SELECT gene_id, COUNT(*) as exon_count FROM {sql_table_name} WHERE Feature = \'exon\' GROUP BY gene_id", conn, backend)
+    if feature_filter is None:
+        return query_db(f"SELECT {group_by}, COUNT(*) as {return_col_name} FROM {sql_table_name} WHERE Feature = \'{feature_filter}\' GROUP BY {group_by}", conn, backend)
+    else:
+        return query_db(f"SELECT {group_by}, COUNT(*) as {return_col_name} FROM {sql_table_name} GROUP BY {group_by}", conn, backend)
 
 def exon_length(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, backend: str = "duckdb") -> pd.DataFrame:
     """Calculate the total length of exons for each gene in the database.
