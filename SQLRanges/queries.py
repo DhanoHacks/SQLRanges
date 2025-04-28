@@ -5,7 +5,7 @@ import sqlite3
 import tempfile
 import os
 import pyranges.methods.merge, pyranges.methods.intersection, pyranges.methods.coverage, pyranges.methods.subtraction
-from utils import get_connection, query_db, get_intervals, to_db
+from .utils import get_connection, query_db, get_intervals, to_db
 
 def count_intervals(sql_table_name: str, conn: sqlite3.Connection | duckdb.DuckDBPyConnection, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count", backend: str = "duckdb") -> pd.DataFrame:
     """Count the number of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.

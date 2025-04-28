@@ -5,18 +5,19 @@ import ray
 import pandas as pd
 import pyranges as pr
 
-def get_connection(sql_db_name: str, backend: str = "duckdb") -> sqlite3.Connection | duckdb.DuckDBPyConnection:
+def get_connection(sql_db_name: str, backend: str = "duckdb", read_only=True) -> sqlite3.Connection | duckdb.DuckDBPyConnection:
     """Get a connection to the database.
 
     Args:
         sql_db_name (str): Name of the database file.
         backend (str, optional): Database backend to use. Defaults to "duckdb".
+        read_only (bool, optional): Whether to open the (duckdb) database in read-only mode. Defaults to True.
 
     Returns:
         sqlite3.Connection | duckdb.DuckDBPyConnection: Database connection object.
     """
     if backend == "duckdb":
-        return duckdb.connect(sql_db_name, read_only=True)
+        return duckdb.connect(sql_db_name, read_only=read_only)
     else:
         return sqlite3.connect(sql_db_name)
 
@@ -172,18 +173,14 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
     
     # If input is a DataFrame, convert it to a list of lines
     if isinstance(input, pd.DataFrame):
+        conn = get_connection(sql_db_name, backend=backend, read_only=False)
+        query_db(f"DROP TABLE IF EXISTS \"{sql_table_name}\"", conn, backend=backend, return_df=False)
         if backend == "duckdb":
-            conn = duckdb.connect(sql_db_name)
-            conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
-            conn.execute(f"CREATE TABLE {sql_table_name} AS SELECT * FROM input")
-            conn.commit()
-            conn.close()
+            conn.execute(f"CREATE TABLE \"{sql_table_name}\" AS SELECT * FROM input")
         else:
-            conn = sqlite3.connect(sql_db_name)
-            conn.execute(f"DROP TABLE IF EXISTS {sql_table_name}")
             input.to_sql(sql_table_name, conn, if_exists="replace", index=False)
-            conn.commit()
-            conn.close()
+        conn.commit()
+        conn.close()
         return
     
     # if ray is not initialized, initialize it
@@ -215,7 +212,7 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
     elapsed = time.time() - start_time
     print(f"Created DataFrame with {len(df)} rows in {elapsed*1000:.0f}ms")
     
-    conn = get_connection(sql_db_name, backend=backend)
+    conn = get_connection(sql_db_name, backend=backend, read_only=False)
     query_db(f"DROP TABLE IF EXISTS \"{sql_table_name}\"", conn, backend=backend, return_df=False)
     if backend == "duckdb":
         conn.execute(f"CREATE TABLE \"{sql_table_name}\" AS SELECT * FROM df")
