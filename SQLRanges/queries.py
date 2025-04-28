@@ -88,7 +88,7 @@ def merge_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: lis
     merged_intervals = [df for df in merged_intervals if df is not None and not df.empty]
     if not merged_intervals:
         return pd.DataFrame(columns=["Chromosome", "Start", "End", "Strand"])
-    merged_intervals = pd.concat(merged_intervals).sort_values(["Chromosome", "Strand", "Start", "End"]).reset_index(drop=True)
+    merged_intervals = pd.concat(merged_intervals)
     return merged_intervals
 
 @ray.remote
