@@ -174,3 +174,19 @@ def to_pyranges(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name
         return pr.PyRanges(conn.execute(f"SELECT * FROM {table_name}").fetchdf())
     else:
         return pr.PyRanges(pd.read_sql_query(f"SELECT * FROM {table_name}", conn))
+
+def to_pandas(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str, backend: str = "duckdb") -> pd.DataFrame:
+    """Convert a SQL table to a pandas DataFrame.
+
+    Args:
+        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        table_name (str): Name of the SQL table to query.
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
+    """
+    if backend == "duckdb":
+        return conn.execute(f"SELECT * FROM {table_name}").fetchdf()
+    else:
+        return pd.read_sql_query(f"SELECT * FROM {table_name}", conn)

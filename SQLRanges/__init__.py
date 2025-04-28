@@ -37,6 +37,14 @@ class SQLRanges:
             pyranges.PyRanges: A PyRanges object containing the genomic data from the SQL table.
         """
         return utils.to_pyranges(self.conn, self.table_name, backend=self.backend)
+    
+    def to_pandas(self) -> pd.DataFrame:
+        """Convert the SQL table to a pandas DataFrame.
+
+        Returns:
+            pd.DataFrame: A pandas DataFrame containing the genomic data from the SQL table.
+        """
+        return utils.to_pandas(self.conn, self.table_name, backend=self.backend)
         
     def count_exons(self) -> pd.DataFrame:
         """Count the number of exons for each gene in the database.
