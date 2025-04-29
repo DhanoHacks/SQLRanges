@@ -191,7 +191,7 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
     # If input is a file, read it in chunks
     with open(input, "r") as f:
         # Process the lines in batches using Ray
-        start_time = time.time()
+        # start_time = time.time()
         futures = []
         while True:
             # Each batch processes chunk_size bytes at once.
@@ -199,19 +199,19 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
             if not lines_batch:
                 break
             futures.append(process_batch.remote(lines_batch, format))
-        elapsed = time.time() - start_time
-        print(f"Submitted {len(futures)} tasks to ray in {elapsed*1000:.0f}ms")
+        # elapsed = time.time() - start_time
+        # print(f"Submitted {len(futures)} tasks to ray in {elapsed*1000:.0f}ms")
         
         # Wait for all futures to complete and collect the results.
-        start_time = time.time()
+        # start_time = time.time()
         dfs = ray.get(futures)
-        elapsed = time.time() - start_time
-        print(f"Processed all lines in {elapsed*1000:.0f}ms")
+        # elapsed = time.time() - start_time
+        # print(f"Processed all lines in {elapsed*1000:.0f}ms")
     # Concatenate all line_dicts into a single DataFrame
-    start_time = time.time()
+    # start_time = time.time()
     df = pd.concat(dfs, ignore_index=True)
-    elapsed = time.time() - start_time
-    print(f"Created DataFrame with {len(df)} rows in {elapsed*1000:.0f}ms")
+    # elapsed = time.time() - start_time
+    # print(f"Created DataFrame with {len(df)} rows in {elapsed*1000:.0f}ms")
     
     conn = get_connection(sql_db_name, backend=backend, read_only=False)
     query_db(f"DROP TABLE IF EXISTS \"{sql_table_name}\"", conn, backend=backend, return_df=False)
