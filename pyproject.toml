@@ -15,7 +15,8 @@ dependencies = [
     "pandas",
     "ray",
     "duckdb",
-    "pyranges"
+    "pyranges",
+    "setuptools"
 ]
 requires-python = ">=3.7"
 classifiers = [
