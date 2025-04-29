@@ -1,4 +1,4 @@
-# SQLRanges
+# sqlranges
 
 Perform **SQL-backed operations** on genomic intervals using **SQLite** or **DuckDB**.  
 Easily convert your results to **PyRanges** for seamless downstream analysis.
@@ -8,4 +8,4 @@ Easily convert your results to **PyRanges** for seamless downstream analysis.
 ## Installation
 
 ```bash
-pip install SQLRanges
+pip install sqlranges

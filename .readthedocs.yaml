@@ -13,7 +13,7 @@ build:
 python:
   install:
     - requirements: requirements.txt  # You can use a requirements file for your dependencies
-    - path: .  # Install the package from the current directory (to make SQLRanges available to Sphinx)
+    - path: .  # Install the package from the current directory (to make sqlranges available to Sphinx)
 
 # Specify the Sphinx configuration file
 sphinx:

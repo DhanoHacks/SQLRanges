@@ -1,21 +1,21 @@
-SQLRanges package
+sqlranges package
 =================
 
 Submodules
 ----------
 
-SQLRanges.queries module
+sqlranges.queries module
 ------------------------
 
-.. automodule:: SQLRanges.queries
+.. automodule:: sqlranges.queries
    :members:
    :show-inheritance:
    :undoc-members:
 
-SQLRanges.utils module
+sqlranges.utils module
 ----------------------
 
-.. automodule:: SQLRanges.utils
+.. automodule:: sqlranges.utils
    :members:
    :show-inheritance:
    :undoc-members:
@@ -23,7 +23,7 @@ SQLRanges.utils module
 Module contents
 ---------------
 
-.. automodule:: SQLRanges
+.. automodule:: sqlranges
    :members:
    :show-inheritance:
    :undoc-members:

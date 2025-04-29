@@ -5,7 +5,7 @@ import pandas as pd
 import ray
 import pyranges as pr
 
-class SQLRanges:
+class sqlranges:
     """
     This class provides methods to perform various operations on genomic data stored in a SQL database.
     
@@ -13,7 +13,7 @@ class SQLRanges:
     """
     def __init__(self, input: str | pd.DataFrame, table_name: str, db_name: str, backend: str = "sqlite3", file_format: str = "gtf"):
         """
-        Initialize the SQLRanges class.
+        Initialize the sqlranges class.
 
         Args:
             input (str | pandas.DataFrame): Path to the input file (GTF or GFF3 or SQLite3 or Duckdb) or a pandas DataFrame containing genomic data.
@@ -124,4 +124,4 @@ class SQLRanges:
         """
         return queries.subtract_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
     
-__all__ = ["SQLRanges"]
+__all__ = ["sqlranges"]

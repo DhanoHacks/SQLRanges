@@ -1,7 +1,7 @@
-SQLRanges
+sqlranges
 =========
 
 .. toctree::
    :maxdepth: 4
 
-   SQLRanges
+   sqlranges

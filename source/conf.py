@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'SQLRanges'
+project = 'sqlranges'
 copyright = '2025, Dhananjay Raman, Saket Choudhary'
 author = 'Dhananjay Raman, Saket Choudhary'
 release = '2025'

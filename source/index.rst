@@ -1,11 +1,11 @@
-SQLRanges Documentation
+sqlranges Documentation
 =======================
 
-SQLRanges is a Python library for performing **SQL-backed operations** on genomic intervals using **SQLite** or **DuckDB**. It allows seamless conversion of results to **PyRanges** for downstream analysis.
+sqlranges is a Python library for performing **SQL-backed operations** on genomic intervals using **SQLite** or **DuckDB**. It allows seamless conversion of results to **PyRanges** for downstream analysis.
 
-With SQLRanges, you can easily interact with genomic data stored in SQL databases and perform operations such as exon counting, merging exon intervals, and finding overlapping genes.
+With sqlranges, you can easily interact with genomic data stored in SQL databases and perform operations such as exon counting, merging exon intervals, and finding overlapping genes.
 
-This documentation will guide you through the installation, usage, and API of SQLRanges.
+This documentation will guide you through the installation, usage, and API of sqlranges.
 
 Table of Contents
 =================
@@ -22,23 +22,23 @@ Table of Contents
 Installation
 ============
 
-To install **SQLRanges**, simply run the following command:
+To install **sqlranges**, simply run the following command:
 
 .. code-block:: bash
 
-   pip install SQLRanges
+   pip install sqlranges
 
 Usage
 =====
 
-Here's an example of how to use the `SQLRanges` class:
+Here's an example of how to use the `sqlranges` class:
 
 .. code-block:: python
 
-   from SQLRanges import SQLRanges
+   from sqlranges import sqlranges
 
-   # Initialize the SQLRanges object
-   sqlranges = SQLRanges(input_file="Homo_sapiens.GRCh38.112.chr.gtf", 
+   # Initialize the sqlranges object
+   sqlranges = sqlranges(input_file="Homo_sapiens.GRCh38.112.chr.gtf", 
                          table_name="human", 
                          db_name="db-human.duckdb", 
                          backend="duckdb")
@@ -58,12 +58,12 @@ The following sections describe the available methods and their usage.
    :maxdepth: 2
    :caption: API Reference:
 
-   SQLRanges
+   sqlranges
 
 Modules
 =======
 
-The SQLRanges package includes several modules that handle database operations, genomic interval manipulations, and PyRanges conversions.
+The sqlranges package includes several modules that handle database operations, genomic interval manipulations, and PyRanges conversions.
 
 .. toctree::
    :maxdepth: 1
