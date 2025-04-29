@@ -20,18 +20,15 @@ def downloaded_gtf(tmp_path_factory: pytest.TempPathFactory):
         tmp_path_factory (pytest.TempPathFactory): Fixture for creating temporary paths.
     """
     tmp_dir = tmp_path_factory.mktemp("data")
-    if not os.path.exists("../Genomics-Tools-Analysis/data/gencode.vM36.annotation.gtf"):
-        gz_path = tmp_dir / "gencode.vM36.annotation.gtf.gz"
-        gtf_path = tmp_dir / "gencode.vM36.annotation.gtf"
+    gz_path = tmp_dir / "gencode.vM36.annotation.gtf.gz"
+    gtf_path = tmp_dir / "gencode.vM36.annotation.gtf"
 
-        if not gz_path.exists():
-            urllib.request.urlretrieve(GTF_URL, gz_path)
+    if not gz_path.exists():
+        urllib.request.urlretrieve(GTF_URL, gz_path)
 
-        with gzip.open(gz_path, "rb") as f_in:
-            with open(gtf_path, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-    else:
-        gtf_path = "../Genomics-Tools-Analysis/data/gencode.vM36.annotation.gtf"
+    with gzip.open(gz_path, "rb") as f_in:
+        with open(gtf_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
 @pytest.fixture(params=["duckdb", "sqlite3"])
 def sqlr(downloaded_gtf: str, tmp_path: pathlib.Path, request: pytest.FixtureRequest):
