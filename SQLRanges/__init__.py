@@ -16,17 +16,21 @@ class SQLRanges:
         Initialize the SQLRanges class.
 
         Args:
-            input (str | pandas.DataFrame): Path to the input file (GTF or GFF3) or a pandas DataFrame containing genomic data.
+            input (str | pandas.DataFrame): Path to the input file (GTF or GFF3 or SQLite3 or Duckdb) or a pandas DataFrame containing genomic data.
             table_name (str): Name of the table to be created in the database.
             db_name (str): Name of the database file (e.g., 'database.db').
             backend (str, optional): Database backend to use. Either 'sqlite3' or 'duckdb'. Defaults to 'sqlite3'.
-            file_format (str, optional): Format of the input file. Either 'gtf' or 'gff3'. Defaults to 'gtf'.
+            file_format (str, optional): Format of the input file. Either 'gtf' or 'gff3' or 'sqlite3' or 'duckdb'. Defaults to 'gtf'.
         """
         assert backend in ['sqlite3', 'duckdb'], "Backend must be either 'sqlite3' or 'duckdb'"
+        assert file_format in ['gtf', 'gff3', 'sqlite3', 'duckdb'], "File format must be either 'gtf', 'gff3', 'sqlite3' or 'duckdb'"
         self.db_name = db_name
         self.table_name = table_name
         self.backend = backend
-        utils.to_db(self.db_name, self.table_name, input, format=file_format, backend=self.backend)
+        if file_format in ['gtf', 'gff3']:
+            utils.to_db(self.db_name, self.table_name, input, format=file_format, backend=self.backend)
+        else:
+            assert file_format == backend, "If file_format is 'sqlite3' or 'duckdb', the backend must be the same"
         self.chrom_strand_tup = utils.get_chrom_strand_tup(self.table_name, self.db_name, backend=self.backend)
         self.conn = queries.get_connection(self.db_name, backend=self.backend)
         
