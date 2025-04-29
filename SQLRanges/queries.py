@@ -65,7 +65,7 @@ def  merge_intervals_single(sql_table_name: str, sql_db_name: str, chrom_strand:
         pd.DataFrame: A DataFrame containing the merged intervals for the specified chromosome and strand.
     """
     chrom, strand = chrom_strand
-    self_intervals = get_intervals(sql_table_name, sql_db_name, chrom, strand, feature_filter=feature_filter, backend=backend)
+    self_intervals = get_intervals(sql_table_name, sql_db_name, chrom, strand, feature_filter=feature_filter, return_cols="\"Start\", \"End\"", backend=backend)
     
     merged_intervals = pyranges.methods.merge._merge(self_intervals, chromosome=chrom, count=None, strand=strand)
     return merged_intervals

@@ -58,7 +58,7 @@ def get_chrom_strand_tup(sql_table_name: str, db_name: str, backend: str = "duck
     chrom_strand_tup = list(zip(chrom_strand_tup["Chromosome"], chrom_strand_tup["Strand"]))
     return chrom_strand_tup
 
-def get_intervals(sql_table_name: str, db_name: str, chrom: str, strand: str, feature_filter: str = None, backend: str = "duckdb") -> pd.DataFrame:
+def get_intervals(sql_table_name: str, db_name: str, chrom: str, strand: str, feature_filter: str = None, return_cols: str = "*", backend: str = "duckdb") -> pd.DataFrame:
     """Get intervals from the database based on Chromosome, Strand, and optional feature filter.
 
     Args:
@@ -67,6 +67,7 @@ def get_intervals(sql_table_name: str, db_name: str, chrom: str, strand: str, fe
         chrom (str): Chromosome to filter by.
         strand (str): Strand to filter by.
         feature_filter (str, optional): Feature to filter by. Defaults to None.
+        return_cols (str, optional): Columns to return in the query. Defaults to "*".
         backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
 
     Returns:
@@ -77,7 +78,7 @@ def get_intervals(sql_table_name: str, db_name: str, chrom: str, strand: str, fe
         feature_clause = ""
     else:
         feature_clause = f" Feature = '{feature_filter}' AND"
-    query = f"SELECT * FROM \"{sql_table_name}\" WHERE{feature_clause} Chromosome = '{chrom}' AND Strand = '{strand}'"
+    query = f"SELECT {return_cols} FROM \"{sql_table_name}\" WHERE{feature_clause} Chromosome = '{chrom}' AND Strand = '{strand}'"
     self_intervals = query_db(query, conn, backend)
     conn.close()
     return self_intervals
@@ -218,6 +219,8 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
         conn.execute(f"CREATE TABLE \"{sql_table_name}\" AS SELECT * FROM df")
     else:
         df.to_sql(sql_table_name, conn, if_exists="replace", index=False)
+    # create index on Chromosome, Strand
+    query_db(f"CREATE INDEX \"{sql_table_name}_index\" ON \"{sql_table_name}\" (Chromosome, Strand, Feature)", conn, backend=backend, return_df=False)
     conn.commit()
     conn.close()
 
