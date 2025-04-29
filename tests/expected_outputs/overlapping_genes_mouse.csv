@@ -1,0 +1,9 @@
+Chromosome,Source,Feature,Start,End,Score,Strand,Frame,gene_id,gene_type,gene_name,level,mgi_id,havana_gene,transcript_id,transcript_type,transcript_name,transcript_support_level,tag,havana_transcript,exon_number,exon_id,protein_id,ccdsid,ont
+chr1,HAVANA,gene,3143475,3144545,.,+,.,ENSMUSG00000102693.2,TEC,4933401J01Rik,2,MGI:1918292,OTTMUSG00000049935.1,,,,,,,,,,,
+chr1,ENSEMBL,gene,3172238,3172348,.,+,.,ENSMUSG00000064842.3,snRNA,Gm26206,3,MGI:5455983,,,,,,,,,,,,
+chr1,HAVANA,gene,3322979,3323459,.,+,.,ENSMUSG00000102851.2,processed_pseudogene,Gm18956,2,MGI:5011141,OTTMUSG00000049958.1,,,,,,,,,,,
+chr1,HAVANA,gene,3536793,3583776,.,+,.,ENSMUSG00000089699.3,lncRNA,Gm1992,2,MGI:3780162,OTTMUSG00000026352.1,,,,,,,,,,,
+chr1,HAVANA,gene,3602017,3602943,.,+,.,ENSMUSG00000103147.2,processed_pseudogene,Gm7341,2,MGI:3648497,OTTMUSG00000049921.1,,,,,,,,,,,
+chr1,HAVANA,gene,3750377,3752011,.,+,.,ENSMUSG00000102348.2,TEC,Gm10568,2,MGI:3642703,OTTMUSG00000049922.1,,,,,,,,,,,
+chr1,HAVANA,gene,3822232,3824583,.,+,.,ENSMUSG00000102592.2,TEC,Gm38385,2,MGI:5611613,OTTMUSG00000049923.1,,,,,,,,,,,
+chr1,HAVANA,gene,3943428,4018627,.,+,.,ENSMUSG00000142494.1,lncRNA,ENSMUSG00000142494,2,,,,,,,,,,,,,
