@@ -12,12 +12,15 @@ warnings.filterwarnings("ignore")
 GTF_URL = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M36/gencode.vM36.annotation.gtf.gz"
 
 @pytest.fixture(scope="session")
-def downloaded_gtf(tmp_path_factory: pytest.TempPathFactory):
+def downloaded_gtf(tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
     """Downloads the GTF file if it doesn't exist and returns its path.
     This fixture is used to ensure that the GTF file is available for testing.
 
     Args:
         tmp_path_factory (pytest.TempPathFactory): Fixture for creating temporary paths.
+        
+    Returns:
+        pathlib.Path: Path to the downloaded GTF file.
     """
     tmp_dir = tmp_path_factory.mktemp("data")
     gz_path = tmp_dir / "gencode.vM36.annotation.gtf.gz"
@@ -29,6 +32,8 @@ def downloaded_gtf(tmp_path_factory: pytest.TempPathFactory):
     with gzip.open(gz_path, "rb") as f_in:
         with open(gtf_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
+    
+    return gtf_path
 
 @pytest.fixture(params=["duckdb", "sqlite3"])
 def sqlr(downloaded_gtf: str, tmp_path: pathlib.Path, request: pytest.FixtureRequest):
