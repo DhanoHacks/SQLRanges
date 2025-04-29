@@ -59,7 +59,7 @@ class sqlranges:
         Returns:
             pd.DataFrame: A pandas DataFrame containing the results of the SQL query.
         """
-        return queries.query_db(self.conn, sql, backend=self.backend)
+        return queries.query_db(sql, self.conn, backend=self.backend)
         
     def count_intervals(self, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count") -> pd.DataFrame:
         """Count the number of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
