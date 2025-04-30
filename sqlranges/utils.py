@@ -173,7 +173,7 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
     assert format in ["gtf", "gff3"], "Format must be either 'gtf' or 'gff3'."
     assert backend in ["sqlite3", "duckdb"], "Backend must be either 'sqlite3' or 'duckdb'."
     
-    # If input is a DataFrame, convert it to a list of lines
+    # If input is a DataFrame, write it to the database
     if isinstance(input, pd.DataFrame):
         conn = get_connection(sql_db_name, backend=backend, read_only=False)
         query_db(f"DROP TABLE IF EXISTS \"{sql_table_name}\"", conn, backend=backend, return_df=False)
@@ -181,6 +181,8 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
             conn.execute(f"CREATE TABLE \"{sql_table_name}\" AS SELECT * FROM input")
         else:
             input.to_sql(sql_table_name, conn, if_exists="replace", index=False)
+        # create index on Chromosome, Strand, Feature
+        query_db(f"CREATE INDEX \"{sql_table_name}_index\" ON \"{sql_table_name}\" (Chromosome, Strand, Feature)", conn, backend=backend, return_df=False)
         conn.commit()
         conn.close()
         return
@@ -220,7 +222,7 @@ def to_db(sql_db_name: str, sql_table_name: str, input: str | pd.DataFrame, chun
         conn.execute(f"CREATE TABLE \"{sql_table_name}\" AS SELECT * FROM df")
     else:
         df.to_sql(sql_table_name, conn, if_exists="replace", index=False)
-    # create index on Chromosome, Strand
+    # create index on Chromosome, Strand, Feature
     query_db(f"CREATE INDEX \"{sql_table_name}_index\" ON \"{sql_table_name}\" (Chromosome, Strand, Feature)", conn, backend=backend, return_df=False)
     conn.commit()
     conn.close()
