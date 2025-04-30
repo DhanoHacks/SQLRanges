@@ -67,6 +67,19 @@ def test_to_gtf(sqlr: sqlranges, tmp_path: pathlib.Path):
     df2 = sqlr2.to_pandas()
     assert df1.equals(df2)
 
+def test_to_gff3(sqlr: sqlranges, tmp_path: pathlib.Path):
+    """Test the conversion of the database to GFF3 format.
+
+    Args:
+        sqlr (sqlranges): An instance of sqlranges connected to the database.
+        tmp_path (pathlib.Path): Temporary path for creating the output GFF3 file.
+    """
+    sqlr.to_gff3(tmp_path / "test.gff3")
+    sqlr2 = sqlranges(tmp_path / "test.gff3", table_name="mouse", db_name=str(tmp_path / "test2.db"), file_format="gff3")
+    df1 = sqlr.to_pandas()
+    df2 = sqlr2.to_pandas()
+    assert df1.equals(df2)
+
 def test_count_exons(sqlr: sqlranges):
     """Test the count of exons in the database.
     This test checks the number of exons in the database by grouping

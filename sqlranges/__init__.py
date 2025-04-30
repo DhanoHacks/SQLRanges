@@ -58,6 +58,15 @@ class sqlranges:
             comments (list[str], optional): List of comments to be added to the top of the GTF file. Defaults to [].
         """
         utils.to_gtf(self.conn, self.table_name, output_path, comments=comments, backend=self.backend)
+        
+    def to_gff3(self, output_path: str, comments: list[str] = []) -> None:
+        """Export the SQL table to a GFF3 file.
+
+        Args:
+            output_path (str): Path to the output GFF3 file.
+            comments (list[str], optional): List of comments to be added to the top of the GFF3 file. Defaults to [].
+        """
+        utils.to_gff3(self.conn, self.table_name, output_path, comments=comments, backend=self.backend)
 
     def query_sql(self, sql: str) -> pd.DataFrame:
         """Execute a SQL query on the database.

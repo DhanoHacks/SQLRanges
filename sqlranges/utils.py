@@ -277,3 +277,28 @@ def to_gtf(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str
     # append the data to the file, but only the first 8 columns and the attributes column
     df[["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "attributes"]].to_csv(output_path, mode="a", header=False, index=False, sep="\t", quoting=csv.QUOTE_NONE)
     
+def to_gff3(conn: sqlite3.Connection | duckdb.DuckDBPyConnection, table_name: str, output_path: str, comments: list[str] = [], backend: str = "duckdb") -> None:
+    """Export a SQL table to a GFF3 file.
+
+    Args:
+        conn (sqlite3.Connection | duckdb.DuckDBPyConnection): Database connection object.
+        table_name (str): Name of the SQL table to query.
+        output_path (str): Path to the output GFF3 file.
+        comments (list[str], optional): List of comments to be added to the top of the GFF3 file. Defaults to [].
+        backend (str, optional): Database backend to use, either "sqlite3" or "duckdb". Defaults to "duckdb".
+    """
+    df = to_pandas(conn, table_name, backend=backend)   
+    # attributes are key-value pairs where the key and value are separated by an "=", and consecutive key-value pairs are separated by ";"
+    # sort the columns in the order of GFF3
+    df = df[["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame"] + [col for col in df.columns if col not in ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame"]]]
+    # increment df["Start"] by 1
+    df["Start"] = df["Start"] + 1
+    # create the attributes column, ensure it doesnt have any None values
+    df["attributes"] = df.apply(lambda x: ";".join([f'{k}={v}' for k, v in x.items() if k not in ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame"] and v is not None]), axis=1)
+    # add the comments to the top of the file
+    with open(output_path, "w") as f:
+        for comment in comments:
+            f.write(f"{comment}\n")
+    # append the data to the file, but only the first 8 columns and the attributes column
+    df[["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "attributes"]].to_csv(output_path, mode="a", header=False, index=False, sep="\t", quoting=csv.QUOTE_NONE)
+    
