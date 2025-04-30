@@ -50,6 +50,15 @@ class sqlranges:
         """
         return utils.to_pyranges(self.conn, self.table_name, backend=self.backend)
 
+    def to_gtf(self, output_path: str, comments: list[str] = []) -> None:
+        """Export the SQL table to a GTF file.
+
+        Args:
+            output_path (str): Path to the output GTF file.
+            comments (list[str], optional): List of comments to be added to the top of the GTF file. Defaults to [].
+        """
+        utils.to_gtf(self.conn, self.table_name, output_path, comments=comments, backend=self.backend)
+
     def query_sql(self, sql: str) -> pd.DataFrame:
         """Execute a SQL query on the database.
 
