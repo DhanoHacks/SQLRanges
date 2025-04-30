@@ -54,6 +54,19 @@ def sqlr(downloaded_gtf: str, tmp_path: pathlib.Path, request: pytest.FixtureReq
     db_path = tmp_path / f"test-{request.param}.db"
     return sqlranges(str(downloaded_gtf), table_name="mouse", db_name=str(db_path), backend=request.param, file_format="gtf")
 
+def test_to_gtf(sqlr: sqlranges, tmp_path: pathlib.Path):
+    """Test the conversion of the database to GTF format.
+
+    Args:
+        sqlr (sqlranges): An instance of sqlranges connected to the database.
+        tmp_path (pathlib.Path): Temporary path for creating the output GTF file.
+    """
+    sqlr.to_gtf(tmp_path / "test.gtf")
+    sqlr2 = sqlranges(tmp_path / "test.gtf", table_name="mouse", db_name=str(tmp_path / "test2.db"), file_format="gtf")
+    df1 = sqlr.to_pandas()
+    df2 = sqlr2.to_pandas()
+    assert df1.equals(df2)
+
 def test_count_exons(sqlr: sqlranges):
     """Test the count of exons in the database.
     This test checks the number of exons in the database by grouping
