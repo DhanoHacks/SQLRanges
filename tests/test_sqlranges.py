@@ -146,10 +146,9 @@ def test_overlapping_genes(sqlr: sqlranges, tmp_path: pathlib.Path):
         tmp_path (pathlib.Path): Temporary path for creating the output file.
     """
     other = pd.DataFrame({"Chromosome": ["chr1"], "Start": [3000000], "End": [4000000], "Strand": ["+"], "Feature": ["gene"]})
-    df1 = sqlr.overlapping_intervals(other, feature_filter="gene")
-    df2 = pd.read_csv("tests/expected_outputs/overlapping_genes_mouse.csv")
-    diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
-    assert diff.empty
+    sqlr.overlapping_intervals(other, feature_filter="gene").to_csv(tmp_path / "overlapping_genes.csv", index=False)
+    diff = os.popen(f"diff {tmp_path}/overlapping_genes.csv tests/expected_outputs/overlapping_genes_mouse.csv").read()
+    assert diff == ""
 
 def test_subtracted_exons(sqlr: sqlranges, tmp_path: pathlib.Path):
     """Test the subtraction of exon intervals from the database.
@@ -166,7 +165,7 @@ def test_subtracted_exons(sqlr: sqlranges, tmp_path: pathlib.Path):
         FROM mouse WHERE Feature = 'exon' 
         GROUP BY Chromosome, Strand
     """)
-    df1 = sqlr.subtract_intervals(sqlranges(other_genes, table_name="mouse", db_name=str(tmp_path / "test3.db"), file_format="duckdb"), feature_filter="exon", other_feature_filter="exon")
+    df1 = sqlr.subtract_intervals(sqlranges(other_genes, table_name="mouse", db_name=str(tmp_path / "test3.db")), feature_filter="exon", other_feature_filter="exon")
     df2 = pd.read_csv("tests/expected_outputs/subtracted_exons_mouse.csv")
     diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
     assert diff.empty
