@@ -166,7 +166,7 @@ def test_subtracted_exons(sqlr: sqlranges, tmp_path: pathlib.Path):
         FROM mouse WHERE Feature = 'exon' 
         GROUP BY Chromosome, Strand
     """)
-    df1 = sqlr.subtract_intervals(sqlranges(other_genes,table_name="mouse", table_name="mouse", db_name=str(tmp_path / "test3.db"), file_format="duckdb"), feature_filter="exon", other_feature_filter="exon")
+    df1 = sqlr.subtract_intervals(sqlranges(other_genes, table_name="mouse", db_name=str(tmp_path / "test3.db"), file_format="duckdb"), feature_filter="exon", other_feature_filter="exon")
     df2 = pd.read_csv("tests/expected_outputs/subtracted_exons_mouse.csv")
     diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
     assert diff.empty
