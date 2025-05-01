@@ -129,17 +129,18 @@ class sqlranges:
         """
         return queries.overlapping_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
     
-    def subtract_intervals(self, other_intervals: pd.DataFrame, feature_filter: None | str = None) -> pd.DataFrame:
+    def subtract_intervals(self, other_intervals: "sqlranges", feature_filter: None | str = None, other_feature_filter: None | str = None) -> pd.DataFrame:
         """Subtract a set of other intervals from the database intervals. The function can also optionaly filter the intervals based on a specific feature.
 
         Args:
-            other_intervals (pd.DataFrame): A DataFrame containing the other intervals to subtract.
-                The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand' (and 'Feature' if feature_filter is set).
-            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+            other_intervals (sqlranges): A sqlranges object containing the other intervals to subtract.
+                The other intervals should have the columns 'Chromosome', 'Start', 'End', and 'Strand'.
+            feature_filter (None | str, optional): Filter for specific features on the database intervals. If None, no filter is applied. Defaults to None.
+            other_feature_filter (None | str, optional): Filter for specific features on the other intervals. If None, no filter is applied. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame containing the intervals after subtraction.
         """
-        return queries.subtract_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
+        return queries.subtract_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals.table_name, other_intervals.db_name, feature_filter=feature_filter, other_feature_filter=other_feature_filter, backend=self.backend, other_backend=other_intervals.backend)
     
 __all__ = ["sqlranges"]

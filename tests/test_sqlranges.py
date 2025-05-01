@@ -62,10 +62,11 @@ def test_to_gtf(sqlr: sqlranges, tmp_path: pathlib.Path):
         tmp_path (pathlib.Path): Temporary path for creating the output GTF file.
     """
     sqlr.to_gtf(tmp_path / "test.gtf")
-    sqlr2 = sqlranges(tmp_path / "test.gtf", table_name="mouse", db_name=str(tmp_path / "test2.db"), file_format="gtf")
+    sqlr2 = sqlranges(tmp_path / "test.gtf", table_name="mouse", db_name=str(tmp_path / "test1.db"), file_format="gtf")
     df1 = sqlr.to_pandas()
     df2 = sqlr2.to_pandas()
-    assert df1.equals(df2)
+    diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
+    assert diff.empty
 
 def test_to_gff3(sqlr: sqlranges, tmp_path: pathlib.Path):
     """Test the conversion of the database to GFF3 format.
@@ -78,7 +79,8 @@ def test_to_gff3(sqlr: sqlranges, tmp_path: pathlib.Path):
     sqlr2 = sqlranges(tmp_path / "test.gff3", table_name="mouse", db_name=str(tmp_path / "test2.db"), file_format="gff3")
     df1 = sqlr.to_pandas()
     df2 = sqlr2.to_pandas()
-    assert df1.equals(df2)
+    diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
+    assert diff.empty
 
 def test_count_exons(sqlr: sqlranges):
     """Test the count of exons in the database.
@@ -90,10 +92,9 @@ def test_count_exons(sqlr: sqlranges):
         sqlr (sqlranges): An instance of sqlranges connected to the database.
     """
     df = sqlr.count_intervals(group_by="gene_id", feature_filter="exon", return_col_name="exon_count")
-    df["exon_count"] = df["exon_count"].astype(int)
-    df = df.sort_values("gene_id").reset_index(drop=True)
     expected = pd.read_csv("tests/expected_outputs/exon_counts_mouse.csv")
-    assert df.equals(expected)
+    diff = pd.concat([df, expected]).drop_duplicates(keep=False)
+    assert diff.empty
 
 def test_total_exon_length(sqlr: sqlranges):
     """Test the total length of exons in the database.
@@ -105,10 +106,9 @@ def test_total_exon_length(sqlr: sqlranges):
         sqlr (sqlranges): An instance of sqlranges connected to the database.
     """
     df = sqlr.total_length(group_by="gene_id", feature_filter="exon", return_col_name="total_exon_length")
-    df["total_exon_length"] = df["total_exon_length"].astype(int)
-    df = df.sort_values("gene_id").reset_index(drop=True)
     expected = pd.read_csv("tests/expected_outputs/total_exon_length_mouse.csv")
-    assert df.equals(expected)
+    diff = pd.concat([df, expected]).drop_duplicates(keep=False)
+    assert diff.empty
 
 def test_highest_transcripts(sqlr : sqlranges):
     """Test the highest number of transcripts in a gene.
@@ -131,9 +131,10 @@ def test_merge_exon_intervals(sqlr : sqlranges):
     Args:
         sqlr (sqlranges): An instance of sqlranges connected to the database.
     """
-    df = sqlr.merge_intervals(feature_filter="exon").sort_values(["Chromosome", "Strand", "Start", "End"]).reset_index(drop=True)
+    df = sqlr.merge_intervals(feature_filter="exon")
     expected = pd.read_csv("tests/expected_outputs/merged_exon_intervals_mouse.csv")
-    assert df.equals(expected)
+    diff = pd.concat([df, expected]).drop_duplicates(keep=False)
+    assert diff.empty
 
 def test_overlapping_genes(sqlr: sqlranges, tmp_path: pathlib.Path):
     """Test the overlapping genes in the database.
@@ -145,9 +146,10 @@ def test_overlapping_genes(sqlr: sqlranges, tmp_path: pathlib.Path):
         tmp_path (pathlib.Path): Temporary path for creating the output file.
     """
     other = pd.DataFrame({"Chromosome": ["chr1"], "Start": [3000000], "End": [4000000], "Strand": ["+"], "Feature": ["gene"]})
-    sqlr.overlapping_intervals(other, feature_filter="gene").sort_values(["Chromosome", "Strand", "Start", "End"]).reset_index(drop=True).to_csv(tmp_path / "overlapping_genes.csv", index=False)
-    diff = os.popen(f"diff {tmp_path / 'overlapping_genes.csv'} tests/expected_outputs/overlapping_genes_mouse.csv").read()
-    assert diff == "", "Overlapping genes do not match expected output."
+    df1 = sqlr.overlapping_intervals(other, feature_filter="gene")
+    df2 = pd.read_csv("tests/expected_outputs/overlapping_genes_mouse.csv")
+    diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
+    assert diff.empty
 
 def test_subtracted_exons(sqlr: sqlranges, tmp_path: pathlib.Path):
     """Test the subtraction of exon intervals from the database.
@@ -164,14 +166,7 @@ def test_subtracted_exons(sqlr: sqlranges, tmp_path: pathlib.Path):
         FROM mouse WHERE Feature = 'exon' 
         GROUP BY Chromosome, Strand
     """)
-    out_path = tmp_path / "subtracted.csv"
-    sqlr.subtract_intervals(other_genes, feature_filter="exon").to_csv(out_path, index=False)
-
-    # Sort both files for comparison
-    sorted_test = tmp_path / "sorted_test.csv"
-    sorted_expected = tmp_path / "sorted_expected.csv"
-    os.system(f"sort {out_path} > {sorted_test}")
-    os.system(f"sort tests/expected_outputs/subtracted_exons_mouse.csv > {sorted_expected}")
-
-    diff = os.popen(f"diff {sorted_test} {sorted_expected}").read()
-    assert diff == "", "Subtracted exons do not match expected output."
+    df1 = sqlr.subtract_intervals(sqlranges(other_genes,table_name="mouse", table_name="mouse", db_name=str(tmp_path / "test3.db"), file_format="duckdb"), feature_filter="exon", other_feature_filter="exon")
+    df2 = pd.read_csv("tests/expected_outputs/subtracted_exons_mouse.csv")
+    diff = pd.concat([df1, df2]).drop_duplicates(keep=False)
+    assert diff.empty
