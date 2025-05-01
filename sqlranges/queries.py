@@ -193,7 +193,7 @@ def subtract_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: 
     Returns:
         pd.DataFrame: A DataFrame containing the subtracted intervals for all specified chromosomes and strands.
     """
-    futures = [subtract_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, other_sql_table_name, other_sql_db_name, feature_filter=feature_filter, other_feature_filter=other_feature_filter, backend=backend) for chrom_strand in chrom_strand_tup]
+    futures = [subtract_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, other_sql_table_name, other_sql_db_name, feature_filter=feature_filter, other_feature_filter=other_feature_filter, backend=backend, other_backend=other_backend) for chrom_strand in chrom_strand_tup]
     subtracted_intervals = ray.get(futures)
     subtracted_intervals = pd.concat(subtracted_intervals)
     return subtracted_intervals
