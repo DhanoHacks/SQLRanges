@@ -93,7 +93,7 @@ def merge_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: lis
     return merged_intervals
 
 @ray.remote
-def overlapping_intervals_single(sql_table_name: str, sql_db_name: str, chrom_strand: tuple, other_intervals: pd.DataFrame, feature_filter: None | str = None, backend: str = "duckdb") -> pd.DataFrame:
+def overlapping_intervals_single(sql_table_name: str, sql_db_name: str, chrom_strand: tuple, other_sql_table_name: str, other_sql_db_name: str, feature_filter: None | str = None, other_feature_filter: None | str = None, backend: str = "duckdb", other_backend: str = "duckdb") -> pd.DataFrame:
     """Find overlapping intervals between the database and a set of other intervals for a specific chromosome and strand. The function can also optionaly filter the intervals based on a specific feature.
     This function is designed to be run in parallel using Ray.
 
@@ -101,10 +101,13 @@ def overlapping_intervals_single(sql_table_name: str, sql_db_name: str, chrom_st
         sql_table_name (str): Name of the SQL table.
         sql_db_name (str): Name of the SQL database.
         chrom_strand (tuple): Tuple containing chromosome and strand information.
-        other_intervals (pd.DataFrame): DataFrame containing the gene intervals to check for overlaps with.
-            The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand' (and 'Feature' if feature_filter is set).
-        feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+        other_sql_table_name (str): Name of the SQL table containing the intervals to find overlaps with.
+        other_sql_db_name (str): Name of the SQL database containing the intervals to find overlaps with.
+            The database should have columns 'Chromosome', 'Start', 'End', and 'Strand' (and 'Feature' if other_feature_filter is set).
+        feature_filter (None | str, optional): Filter for specific features on the database intervals. If None, no filter is applied. Defaults to None.
+        other_feature_filter (None | str, optional): Filter for specific features on the other intervals. If None, no filter is applied. Defaults to None.
         backend (str, optional): Database backend to use. Defaults to "duckdb".
+        other_backend (str, optional): Database backend to use for the other intervals. Defaults to "duckdb".
 
     Returns:
         pd.DataFrame: A DataFrame containing the overlapping intervals for the specified chromosome and strand.
@@ -112,33 +115,29 @@ def overlapping_intervals_single(sql_table_name: str, sql_db_name: str, chrom_st
     chrom, strand = chrom_strand
     self_intervals = get_intervals(sql_table_name, sql_db_name, chrom, strand, feature_filter=feature_filter, backend=backend)
 
-    if feature_filter is None:
-        other_intervals_chrom_strand = other_intervals[
-            (other_intervals["Chromosome"] == chrom) & (other_intervals["Strand"] == strand)
-        ]
-    else:
-        other_intervals_chrom_strand = other_intervals[
-            (other_intervals["Chromosome"] == chrom) & (other_intervals["Strand"] == strand) & (other_intervals["Feature"] == feature_filter)
-        ]
-    overlapping_intervals = pyranges.methods.intersection._overlap(self_intervals, other_intervals_chrom_strand, how="first")
+    other_intervals = get_intervals(other_sql_table_name, other_sql_db_name, chrom, strand, feature_filter=other_feature_filter, backend=other_backend)
+    overlapping_intervals = pyranges.methods.intersection._overlap(self_intervals, other_intervals, how="first")
     return overlapping_intervals
 
-def overlapping_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: list, other_intervals: pd.DataFrame, feature_filter: None | str = None, backend: str = "duckdb") -> pd.DataFrame:
+def overlapping_intervals(sql_table_name: str, sql_db_name: str, chrom_strand_tup: list, other_sql_table_name: str, other_sql_db_name: str, feature_filter: None | str = None, other_feature_filter: None | str = None, backend: str = "duckdb", other_backend: str = "duckdb") -> pd.DataFrame:
     """Find overlapping intervals between the database and a set of other intervals for multiple chromosomes and strands. The function can also optionaly filter the intervals based on a specific feature.
 
     Args:
         sql_table_name (str): Name of the SQL table.
         sql_db_name (str): Name of the SQL database.
-        chrom_strand_tup (list): List of tuples containing chromosome and strand information.
-        other_intervals (pd.DataFrame): DataFrame containing the gene intervals to check for overlaps with.
-            The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand' (and 'Feature' if feature_filter is set).
-        feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+        chrom_strand (tuple): Tuple containing chromosome and strand information.
+        other_sql_table_name (str): Name of the SQL table containing the intervals to find overlaps with.
+        other_sql_db_name (str): Name of the SQL database containing the intervals to find overlaps with.
+            The database should have columns 'Chromosome', 'Start', 'End', and 'Strand' (and 'Feature' if other_feature_filter is set).
+        feature_filter (None | str, optional): Filter for specific features on the database intervals. If None, no filter is applied. Defaults to None.
+        other_feature_filter (None | str, optional): Filter for specific features on the other intervals. If None, no filter is applied. Defaults to None.
         backend (str, optional): Database backend to use. Defaults to "duckdb".
+        other_backend (str, optional): Database backend to use for the other intervals. Defaults to "duckdb".
 
     Returns:
         pd.DataFrame: A DataFrame containing the overlapping intervals for all specified chromosomes and strands.
     """
-    futures = [overlapping_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, other_intervals, feature_filter=feature_filter, backend=backend) for chrom_strand in chrom_strand_tup]
+    futures = [overlapping_intervals_single.remote(sql_table_name, sql_db_name, chrom_strand, other_sql_table_name, other_sql_db_name, feature_filter=feature_filter, other_feature_filter=other_feature_filter, backend=backend, other_backend=other_backend) for chrom_strand in chrom_strand_tup]
     overlapping_intervals_list = ray.get(futures)
     return pd.concat(overlapping_intervals_list)
 

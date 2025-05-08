@@ -80,7 +80,7 @@ class sqlranges:
         return queries.query_db(sql, self.conn, backend=self.backend)
         
     def count_intervals(self, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "count") -> pd.DataFrame:
-        """Count the number of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
+        """Count the number of intervals in the database, grouped by a specified column. The function can also optionally filter the intervals based on a specific feature.
 
         Args:
             group_by (str, optional): Column to group by. Defaults to "gene_id".
@@ -93,7 +93,7 @@ class sqlranges:
         return queries.count_intervals(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
     def total_length(self, group_by: str = "gene_id", feature_filter: None | str = None, return_col_name: str = "total_length") -> pd.DataFrame:
-        """Calculate the total length of intervals in the database, grouped by a specified column. The function can also optionaly filter the intervals based on a specific feature.
+        """Calculate the total length of intervals in the database, grouped by a specified column. The function can also optionally filter the intervals based on a specific feature.
 
         Args:
             group_by (str, optional): Column to group by. Defaults to "gene_id".
@@ -106,7 +106,7 @@ class sqlranges:
         return queries.total_length(self.table_name, self.conn, group_by=group_by, feature_filter=feature_filter, return_col_name=return_col_name, backend=self.backend)
     
     def merge_intervals(self, feature_filter: None | str = None) -> pd.DataFrame:
-        """Merge overlapping intervals in the database. The function can also optionaly filter the intervals based on a specific feature.
+        """Merge overlapping intervals in the database. The function can also optionally filter the intervals based on a specific feature.
 
         Args:
             feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
@@ -116,21 +116,22 @@ class sqlranges:
         """
         return queries.merge_intervals(self.table_name, self.db_name, self.chrom_strand_tup, feature_filter=feature_filter, backend=self.backend)
     
-    def overlapping_intervals(self, other_intervals: pd.DataFrame, feature_filter: None | str = None) -> pd.DataFrame:
-        """Find overlapping intervals between the database and a set of other intervals. The function can also optionaly filter the intervals based on a specific feature.
+    def overlapping_intervals(self, other_intervals: "sqlranges", feature_filter: None | str = None, other_feature_filter: None | str = None) -> pd.DataFrame:
+        """Find overlapping intervals between the database and a set of other intervals. The function can also optionally filter the intervals based on a specific feature.
 
         Args:
-            other_intervals (pd.DataFrame): A DataFrame containing the other intervals to check for overlaps.
-                The DataFrame should have columns 'Chromosome', 'Start', 'End', and 'Strand'.
-            feature_filter (None | str, optional): Filter for specific features. If None, no filter is applied. Defaults to None.
+            other_intervals (sqlranges): A sqlranges object containing the other intervals to find overlaps with.
+                The other intervals should have the columns 'Chromosome', 'Start', 'End', and 'Strand'.
+            feature_filter (None | str, optional): Filter for specific features on the database intervals. If None, no filter is applied. Defaults to None.
+            other_feature_filter (None | str, optional): Filter for specific features on the other intervals. If None, no filter is applied. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame containing the overlapping intervals.
         """
-        return queries.overlapping_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals, feature_filter=feature_filter, backend=self.backend)
+        return queries.overlapping_intervals(self.table_name, self.db_name, self.chrom_strand_tup, other_intervals.table_name, other_intervals.db_name, feature_filter=feature_filter, other_feature_filter=other_feature_filter, backend=self.backend, other_backend=other_intervals.backend)
     
     def subtract_intervals(self, other_intervals: "sqlranges", feature_filter: None | str = None, other_feature_filter: None | str = None) -> pd.DataFrame:
-        """Subtract a set of other intervals from the database intervals. The function can also optionaly filter the intervals based on a specific feature.
+        """Subtract a set of other intervals from the database intervals. The function can also optionally filter the intervals based on a specific feature.
 
         Args:
             other_intervals (sqlranges): A sqlranges object containing the other intervals to subtract.

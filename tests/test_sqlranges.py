@@ -146,7 +146,8 @@ def test_overlapping_genes(sqlr: sqlranges, tmp_path: pathlib.Path):
         tmp_path (pathlib.Path): Temporary path for creating the output file.
     """
     other = pd.DataFrame({"Chromosome": ["chr1"], "Start": [3000000], "End": [4000000], "Strand": ["+"], "Feature": ["gene"]})
-    sqlr.overlapping_intervals(other, feature_filter="gene").to_csv(tmp_path / "overlapping_genes.csv", index=False)
+    other_sqlr = sqlranges(other, table_name="other", db_name=str(tmp_path / "test2.db"))
+    sqlr.overlapping_intervals(other_sqlr, feature_filter="gene", other_feature_filter="gene").to_csv(tmp_path / "overlapping_genes.csv", index=False)
     diff = os.popen(f"diff {tmp_path}/overlapping_genes.csv tests/expected_outputs/overlapping_genes_mouse.csv").read()
     assert diff == ""
 
