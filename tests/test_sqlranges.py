@@ -166,5 +166,7 @@ def test_subtracted_exons(sqlr: sqlranges, tmp_path: pathlib.Path):
         GROUP BY Chromosome, Strand
     """)
     sqlr.subtract_intervals(sqlranges(other_genes, table_name="mouse", db_name=str(tmp_path / "test3.db")), feature_filter="exon", other_feature_filter="exon").to_csv(tmp_path / "subtracted_exons.csv", index=False)
-    diff = os.popen(f"diff {tmp_path}/subtracted_exons.csv tests/expected_outputs/subtracted_exons_mouse.csv").read()
+    os.system(f"sort {tmp_path}/subtracted_exons.csv > {tmp_path}/subtracted_exons_sorted.csv")
+    os.system(f"sort tests/expected_outputs/subtracted_exons_mouse.csv > {tmp_path}/subtracted_exons_sorted_expected.csv")
+    diff = os.popen(f"diff {tmp_path}/subtracted_exons_sorted.csv {tmp_path}/subtracted_exons_sorted_expected.csv").read()
     assert diff == ""
